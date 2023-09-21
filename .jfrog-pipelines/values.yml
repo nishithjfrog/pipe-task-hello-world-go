@@ -1,0 +1,5 @@
+repoPath: PIP/pipe-task-hello-world-go
+mainBranch: main
+gitIntegration: JFrog_bitbucket
+artIntegration: entplus_deployer
+windowsNodePool: pipelines_w19

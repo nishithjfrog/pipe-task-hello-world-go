@@ -1,0 +1,20 @@
+name: hello-world-go
+description: My First Pipelines Task
+source: github.com/jfrog/pipe-task-hello-world-go
+labels:
+  - helloworld
+  - example
+  - go
+  - golang
+  - sdk
+input:
+  - name: name
+    description: Name to be greeted.
+output:
+  - name: greeting
+    description: Greeting message produced by the task.
+execution:
+  - bin/hello-${JFROG_OPERATING_SYSTEM_FAMILY}-${JFROG_ARCHITECTURE}
+hooks:
+  onStepComplete:
+    - bin/hello-${JFROG_OPERATING_SYSTEM_FAMILY}-${JFROG_ARCHITECTURE} cleanup

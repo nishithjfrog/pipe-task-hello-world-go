@@ -1,0 +1,96 @@
+template: true
+valuesFilePath: ./values.yml
+
+resources:
+  - name: hello_world_go_task_gitrepo
+    type: GitRepo
+    configuration:
+      path: {{ .Values.repoPath }}
+      gitProvider: {{ .Values.gitIntegration }}
+      branches:
+        include: ^{{ .Values.mainBranch }}$
+      cloneProtocol: https
+
+pipelines:
+  - name: hello_world_go_task_test
+    configuration:
+      jfrogCliVersion: 2
+      environmentVariables:
+        readOnly:
+          RESOLVE_REPO: pipe-go-virtual
+    steps:
+      - name: test_task
+        type: Bash
+        configuration:
+          inputResources:
+            - name: hello_world_go_task_gitrepo
+          integrations:
+            - name: {{ .Values.artIntegration }}
+        execution:
+          onStart:
+            - task: jfrog/setup-go@v0.0.3
+              input:
+                version: 1.19.5
+          onExecute:
+            - pushd $res_hello_world_go_task_gitrepo_resourcePath
+            # Configure JFrog CLI
+            - export GOPROXY="https://${int_{{ .Values.artIntegration }}_user}:${int_{{ .Values.artIntegration }}_apikey}@entplus.jfrog.io/artifactory/api/go/pipe-go-tasks-virtual"
+            - export GONOSUMDB="github.com/jfrog/*"
+            - go get .
+            # Build task runnable binaries
+            - make build-all
+            - popd
+
+            # Run task
+            - task: $res_hello_world_go_task_gitrepo_resourcePath
+              id: hello_world_go_test
+              input:
+                name: "developer"
+
+            # Check task output
+            - echo "task output is $OUT_hello_world_go_test_greeting"
+            # Check exported environment variable
+            - echo "path to greeting file is $GREETING_FILE"
+            # Check task generated file
+            - cat ./greeting.txt
+          onComplete:
+            - echo "Step done!"
+  {{ if .Values.windowsNodePool }}
+      - name: win_test_task
+        type: PowerShell
+        configuration:
+          nodePool: {{ .Values.windowsNodePool }}
+          inputResources:
+            - name: hello_world_go_task_gitrepo
+          integrations:
+            - name: {{ .Values.artIntegration }}
+        execution:
+          onStart:
+            - task: jfrog/setup-go@v0.0.3
+              input:
+                version: 1.19.5
+          onExecute:
+            - pushd $res_hello_world_go_task_gitrepo_resourcePath
+            - export GOPROXY="https://${int_{{ .Values.artIntegration }}_user}:${int_{{ .Values.artIntegration }}_apikey}@entplus.jfrog.io/artifactory/api/go/pipe-go-tasks-virtual"
+            - export GONOSUMDB="github.com/jfrog/*"
+            - go get .
+            # Build task runnable binaries
+            - make build-all
+            - popd
+
+            # Run task
+            - task: $res_hello_world_go_task_gitrepo_resourcePath
+              id: hello_world_go_test
+              input:
+                name: "developer"
+
+            # Check task output
+            - echo "task output is $OUT_hello_world_go_test_greeting"
+            # Check exported environment variable
+            - echo "path to greeting file is $GREETING_FILE"
+            # Check task generated file
+            - cat ./greeting.txt
+          onComplete:
+            - echo "Step done!"
+
+{{ end }}

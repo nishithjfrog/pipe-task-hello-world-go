@@ -1,0 +1,8 @@
+# these are the groups, add people only to these groups and not directly to the folders
+@@@default-reviewer @bhanur @kunalm
+@@@super-users @yashprits @vivekk @nishiths
+
+# this is the default reviewer when there is no other match
+* @@default-reviewer @@super-users
+
+/CODEOWNERS @@default-reviewer

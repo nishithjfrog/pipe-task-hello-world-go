@@ -1,0 +1,82 @@
+template: true
+valuesFilePath: ./values.yml
+
+resources:
+  - name: hello_world_go_task_publish_gitrepo
+    type: GitRepo
+    configuration:
+      path: {{ .Values.repoPath }}
+      gitProvider: {{ .Values.gitIntegration }}
+      branches:
+        include: ^{{ .Values.mainBranch }}$
+      cloneProtocol: https
+
+pipelines:
+  - name: hello_world_go_task_publish
+    configuration:
+      jfrogCliVersion: 2
+      environmentVariables:
+        readOnly:
+          TASK_NAME: jfrog/hello-world-go
+          TASK_VERSION: 0.0.0
+          TASK_REPOSITORY: pipe-dev-tasks-local
+
+    steps:
+      - name: build_and_publish_task
+        type: Bash
+        configuration:
+          inputResources:
+            - name: hello_world_go_task_publish_gitrepo
+              trigger: false
+          integrations:
+            - name: {{ .Values.artIntegration }}
+        execution:
+          onStart:
+            - task: jfrog/setup-go@v0.0.3
+              input:
+                version: 1.19.5
+          onExecute:
+            - pushd $res_hello_world_go_task_publish_gitrepo_resourcePath
+            - export GOPROXY="https://${int_{{ .Values.artIntegration }}_user}:${int_{{ .Values.artIntegration }}_apikey}@entplus.jfrog.io/artifactory/api/go/pipe-go-tasks-virtual"
+            - export GONOSUMDB="github.com/jfrog/*"
+            - go get .
+            - make test
+            # Make sure version was provided
+            - test -n "$TASK_VERSION" -a "$TASK_VERSION" != "0.0.0"
+            - make build-all
+            - ls -latr bin
+            - popd
+
+            # Run publish task
+            - task: jfrog/publish-task@v0.0.5
+              id: publish-hello-world-go
+              input:
+                path: $res_hello_world_go_task_publish_gitrepo_resourcePath
+                targetRepository: $TASK_REPOSITORY
+                taskName: $TASK_NAME
+                taskVersion: $TASK_VERSION
+                includePattern: ^README.md$|^bin
+
+      - name: test_published_task
+        type: Bash
+        configuration:
+          inputSteps:
+            - name: build_and_publish_task
+          integrations:
+            - name: {{ .Values.artIntegration }}
+        execution:
+          onExecute:
+            # Run task
+            - task: $TASK_NAME@v$TASK_VERSION
+              id: hello_world_test
+              input:
+                name: "developer"
+
+            # Check task output
+            - echo "task output is $OUT_hello_world_test_greeting"
+            # Check exported environment variable
+            - echo "path to greeting file is $GREETING_FILE"
+            # Check task generated file
+            - cat ./greeting.txt
+          onComplete:
+            - echo "Step done!"
