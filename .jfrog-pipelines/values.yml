@@ -2,4 +2,3 @@ repoPath: nishithjfrog/pipe-task-hello-world-go
 mainBranch: main
 gitIntegration: github_nishith
 artIntegration: entplus_deployer
-windowsNodePool: pipelines_w19
