@@ -34,7 +34,7 @@ pipelines:
           onExecute:
             - pushd $res_hello_world_go_task_gitrepo_resourcePath
             # Configure JFrog CLI
-            - export GOPROXY="https://${int_{{ .Values.artIntegration }}_user}:${int_{{ .Values.artIntegration }}_apikey}@entplus.jfrog.io/artifactory/api/go/pipe-go-tasks-virtual"
+            - export GOPROXY="https://${int_{{ .Values.artIntegration }}_user}:${int_{{ .Values.artIntegration }}_apikey}@nishithenv.jfrogdev.org//artifactory/api/go/pipe-go-tasks-virtual"
             - export GONOSUMDB="github.com/jfrog/*"
             - go get .
             # Build task runnable binaries
