@@ -1,5 +1,5 @@
-repoPath: PIP/pipe-task-hello-world-go
+repoPath: nishithjfrog/pipe-task-hello-world-go
 mainBranch: main
-gitIntegration: JFrog_bitbucket
+gitIntegration: github_nishith
 artIntegration: entplus_deployer
 windowsNodePool: pipelines_w19
